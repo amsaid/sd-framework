@@ -22,18 +22,19 @@ class Connection
     private function connect(): void
     {
         $dsn = sprintf(
-            '%s:host=%s;port=%s;dbname=%s;charset=utf8mb4',
-            $this->config['driver'] ?? 'mysql',
+            '%s:host=%s;port=%s;dbname=%s;charset=%s',
+            $this->config['type'] ?? 'mysql',
             $this->config['host'] ?? 'localhost',
             $this->config['port'] ?? '3306',
-            $this->config['database']
+            $this->config['name'],
+            $this->config['charset'] ?? 'utf8mb4'
         );
 
         try {
             $this->pdo = new PDO(
                 $dsn,
-                $this->config['username'],
-                $this->config['password'],
+                $this->config['user'],
+                $this->config['pass'],
                 [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
@@ -51,12 +52,30 @@ class Connection
 
     public function query(string $sql, array $params = []): QueryBuilder
     {
-        return new QueryBuilder($this->pdo, $sql, $params);
+        return new QueryBuilder($this, $sql, $params);
     }
 
     public function table(string $table): QueryBuilder
     {
-        return (new QueryBuilder($this->pdo))->table($table);
+        return (new QueryBuilder($this))->table($table);
+    }
+
+    public function statement(string $sql, array $params = []): bool
+    {
+        try {
+            if (empty($params)) {
+                return $this->pdo->exec($sql) !== false;
+            }
+
+            $stmt = $this->pdo->prepare($sql);
+            return $stmt->execute($params);
+        } catch (PDOException $e) {
+            throw new DatabaseException(
+                "Failed to execute SQL statement: " . $e->getMessage(),
+                (int) $e->getCode(),
+                $e
+            );
+        }
     }
 
     public function beginTransaction(): bool

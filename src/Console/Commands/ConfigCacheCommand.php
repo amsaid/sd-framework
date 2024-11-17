@@ -14,22 +14,33 @@ class ConfigCacheCommand extends Command
 
     public function handle(array $arguments = [], array $options = []): int
     {
-        $cachePath = storage_path('framework/cache');
-        
-        if (!is_dir($cachePath)) {
-            mkdir($cachePath, 0755, true);
-        }
+        try {
+            /** @var Config $config */
+            $config = app('config');
+            $cachePath = $this->app->getBasePath() . '/bootstrap/cache/config.php';
+            
+            // Ensure cache directory exists
+            $cacheDir = dirname($cachePath);
+            if (!is_dir($cacheDir)) {
+                mkdir($cacheDir, 0755, true);
+            }
 
-        $config = new Config([], $cachePath);
-        
-        // Load all configuration files
-        $configPath = config_path();
-        foreach (glob($configPath . '/*.php') as $file) {
-            $name = basename($file, '.php');
-            $config->set($name, require $file);
-        }
+            // Get all config items
+            $configArray = $config->all();
 
-        echo "Configuration cached successfully!\n";
-        return 0;
+            // Create cache file content
+            $content = '<?php return ' . var_export($configArray, true) . ';';
+
+            // Write to cache file
+            if (file_put_contents($cachePath, $content) === false) {
+                throw new \RuntimeException("Failed to write config cache file.");
+            }
+
+            $this->output('Configuration cached successfully.');
+            return 0;
+        } catch (\Throwable $e) {
+            $this->error($e->getMessage());
+            return 1;
+        }
     }
 }

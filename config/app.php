@@ -15,14 +15,15 @@ return [
         \SdFramework\Support\ServiceProvider\HelperServiceProvider::class,
         \SdFramework\ServiceProvider\DatabaseServiceProvider::class,
         \SdFramework\Error\ServiceProvider\ErrorServiceProvider::class,
-        \SdFramework\ServiceProvider\ModuleServiceProvider::class,
-        \SdFramework\ServiceProvider\RouteServiceProvider::class,
-        \SdFramework\ServiceProvider\ValidationServiceProvider::class,
+      
         // Add more core providers here
     ],
 
     // Feature providers - optional based on needs
     'providers' => [
+        \SdFramework\ServiceProvider\ModuleServiceProvider::class,
+        \SdFramework\ServiceProvider\RouteServiceProvider::class,
+        \SdFramework\ServiceProvider\ValidationServiceProvider::class,
         \SdFramework\ServiceProvider\SessionServiceProvider::class,
         \SdFramework\ServiceProvider\CacheServiceProvider::class,
     ],

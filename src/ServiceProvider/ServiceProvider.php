@@ -5,18 +5,19 @@ declare(strict_types=1);
 namespace SdFramework\ServiceProvider;
 
 use SdFramework\Application;
+use SdFramework\Console\Application as ConsoleApplication;
 
 abstract class ServiceProvider
 {
     /**
      * The application instance.
      */
-    protected Application $app;
+    protected Application|ConsoleApplication $app;
 
     /**
      * Create a new service provider instance.
      */
-    public function __construct(Application $app)
+    public function __construct(Application|ConsoleApplication $app)
     {
         $this->app = $app;
     }

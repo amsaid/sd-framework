@@ -6,14 +6,20 @@ declare(strict_types=1);
 require __DIR__ . '/vendor/autoload.php';
 
 use SdFramework\Console\Application;
-use SdFramework\Console\Commands\ConfigCacheCommand;
-use SdFramework\Console\Commands\ConfigClearCommand;
 
-$app = new Application();
+// Create console application
+$app = new Application(realpath(__DIR__));
 
-// Register commands
-$app->add(new ConfigCacheCommand());
-$app->add(new ConfigClearCommand());
-
-// Run the application
-exit($app->run($argv));
+try {
+    // Run the application
+    $status = $app->run($argv);
+    exit($status);
+} catch (Throwable $e) {
+    fwrite(STDERR, sprintf(
+        "Fatal Error: %s\nFile: %s:%d\n",
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine()
+    ));
+    exit(1);
+}

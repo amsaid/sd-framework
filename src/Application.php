@@ -145,7 +145,7 @@ class Application extends Container
     {
         try {
             // Register self
-            static::setInstance($this);
+            
             $this->instance('app', $this);
             $this->instance(Container::class, $this);
             $this->instance(Application::class, $this);
@@ -172,9 +172,7 @@ class Application extends Container
                 \SdFramework\Support\ServiceProvider\HelperServiceProvider::class,
                 \SdFramework\ServiceProvider\DatabaseServiceProvider::class,
                 \SdFramework\Error\ServiceProvider\ErrorServiceProvider::class,
-                \SdFramework\ServiceProvider\ModuleServiceProvider::class,
-                \SdFramework\ServiceProvider\RouteServiceProvider::class,
-                \SdFramework\ServiceProvider\ValidationServiceProvider::class,
+                
                 // Add more core providers here
             ]);
 
@@ -192,7 +190,11 @@ class Application extends Container
     {
         try {
             // Register feature service providers
-            $featureProviders = config('app.providers', []);
+            $featureProviders = config('app.providers', [
+                \SdFramework\ServiceProvider\ModuleServiceProvider::class,
+                \SdFramework\ServiceProvider\RouteServiceProvider::class,
+                \SdFramework\ServiceProvider\ValidationServiceProvider::class,
+            ]);
 
             foreach ($featureProviders as $provider) {
                 $this->registerServiceProvider($provider, $this->featureProviders);

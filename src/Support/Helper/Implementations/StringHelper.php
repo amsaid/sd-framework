@@ -8,55 +8,60 @@ use SdFramework\Support\Helper\AbstractHelper;
 
 class StringHelper extends AbstractHelper
 {
-    public function __construct()
+    protected string $value = '';
+
+    public function __construct(string $value = '')
     {
         parent::__construct(
             'str',
             'Helper for string manipulation operations'
         );
+        $this->value = $value;
     }
 
     public function handle(mixed ...$args): mixed
     {
         if (empty($args)) {
-            return '';
+            return $this->value;
         }
 
-        return (string) ($args[0] ?? '');
+        return new static((string) ($args[0] ?? ''));
     }
 
-    public function camel(string $value): string
+    public function camel(): self
     {
-        $words = explode(' ', str_replace(['-', '_'], ' ', $value));
+        $words = explode(' ', str_replace(['-', '_'], ' ', $this->value));
         $studlyWords = array_map('ucfirst', $words);
         
-        return lcfirst(implode('', $studlyWords));
+        return new static(lcfirst(implode('', $studlyWords)));
     }
 
-    public function snake(string $value, string $delimiter = '_'): string
+    public function snake(string $delimiter = '_'): self
     {
+        $value = $this->value;
         if (!ctype_lower($value)) {
             $value = preg_replace('/\s+/u', '', ucwords($value));
             $value = mb_strtolower(preg_replace('/(.)(?=[A-Z])/u', '$1' . $delimiter, $value));
         }
         
-        return $value;
+        return new static($value);
     }
 
-    public function studly(string $value): string
+    public function studly(): self
     {
-        $words = explode(' ', str_replace(['-', '_'], ' ', $value));
+        $words = explode(' ', str_replace(['-', '_'], ' ', $this->value));
         
-        return implode('', array_map('ucfirst', $words));
+        return new static(implode('', array_map('ucfirst', $words)));
     }
 
-    public function kebab(string $value): string
+    public function kebab(): self
     {
-        return $this->snake($value, '-');
+        return $this->snake('-');
     }
 
-    public function slug(string $value, string $separator = '-'): string
+    public function slug(string $separator = '-'): self
     {
+        $value = $this->value;
         // Convert all dashes/underscores into separator
         $flip = $separator === '-' ? '_' : '-';
         $value = preg_replace('![' . preg_quote($flip) . ']+!u', $separator, $value);
@@ -67,10 +72,10 @@ class StringHelper extends AbstractHelper
         // Replace all separator characters and whitespace by a single separator
         $value = preg_replace('![' . preg_quote($separator) . '\s]+!u', $separator, $value);
         
-        return trim($value, $separator);
+        return new static(trim($value, $separator));
     }
 
-    public function random(int $length = 16): string
+    public static function random(int $length = 16): self
     {
         $string = '';
         
@@ -80,22 +85,23 @@ class StringHelper extends AbstractHelper
             $string .= substr(str_replace(['/', '+', '='], '', base64_encode($bytes)), 0, $size);
         }
         
-        return $string;
+        return new static($string);
     }
 
-    public function truncate(string $value, int $length, string $end = '...'): string
+    public function truncate(int $length, string $end = '...'): self
     {
+        $value = $this->value;
         if (mb_strlen($value) <= $length) {
-            return $value;
+            return new static($value);
         }
 
-        return rtrim(mb_substr($value, 0, $length - mb_strlen($end))) . $end;
+        return new static(rtrim(mb_substr($value, 0, $length - mb_strlen($end))) . $end);
     }
 
-    public function contains(string $haystack, string|array $needles): bool
+    public function contains(string|array $needles): bool
     {
         foreach ((array) $needles as $needle) {
-            if ($needle !== '' && mb_strpos($haystack, $needle) !== false) {
+            if ($needle !== '' && mb_strpos($this->value, $needle) !== false) {
                 return true;
             }
         }
@@ -103,10 +109,10 @@ class StringHelper extends AbstractHelper
         return false;
     }
 
-    public function startsWith(string $haystack, string|array $needles): bool
+    public function startsWith(string|array $needles): bool
     {
         foreach ((array) $needles as $needle) {
-            if ($needle !== '' && str_starts_with($haystack, $needle)) {
+            if ($needle !== '' && str_starts_with($this->value, $needle)) {
                 return true;
             }
         }
@@ -114,14 +120,39 @@ class StringHelper extends AbstractHelper
         return false;
     }
 
-    public function endsWith(string $haystack, string|array $needles): bool
+    public function endsWith(string|array $needles): bool
     {
         foreach ((array) $needles as $needle) {
-            if ($needle !== '' && str_ends_with($haystack, $needle)) {
+            if ($needle !== '' && str_ends_with($this->value, $needle)) {
                 return true;
             }
         }
         
         return false;
+    }
+
+    public function toString(): string
+    {
+        return $this->value;
+    }
+
+    public function __toString(): string
+    {
+        return $this->value;
+    }
+
+    public function isEmpty(): bool
+    {
+        return empty($this->value);
+    }
+
+    public function isNotEmpty(): bool
+    {
+        return !$this->isEmpty();
+    }
+
+    public function length(): int
+    {
+        return mb_strlen($this->value);
     }
 }

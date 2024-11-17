@@ -7,7 +7,7 @@ namespace Database\Migrations;
 use SdFramework\Database\Migration;
 use SdFramework\Database\Schema\Table;
 
-class CreateCoreConfigTable extends Migration
+return new class extends  Migration
 {
     public function up(): void
     {
@@ -29,4 +29,4 @@ class CreateCoreConfigTable extends Migration
     {
         $this->dropTable('core_config');
     }
-}
+};

@@ -7,7 +7,7 @@ namespace Database\Migrations;
 use SdFramework\Database\Migration;
 use SdFramework\Database\Schema\Table;
 
-class CreateRoutesTable extends Migration
+return new class extends  Migration
 {
     public function up(): void
     {
@@ -35,4 +35,4 @@ class CreateRoutesTable extends Migration
     {
         $this->dropTable('routes');
     }
-}
+};

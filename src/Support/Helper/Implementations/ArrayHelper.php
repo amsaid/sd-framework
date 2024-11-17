@@ -8,62 +8,64 @@ use SdFramework\Support\Helper\AbstractHelper;
 
 class ArrayHelper extends AbstractHelper
 {
-    public function __construct()
+    protected array $items = [];
+
+    public function __construct(array $items = [])
     {
         parent::__construct(
             'array',
             'Helper for advanced array operations'
         );
+        $this->items = $items;
     }
 
     public function handle(mixed ...$args): mixed
     {
-        // Default behavior when called directly
         if (empty($args)) {
-            return [];
+            return $this->items;
         }
 
-        return $args[0] ?? null;
+        return new static($args[0] ?? []);
     }
 
-    public function get(array $array, string|int $key, mixed $default = null): mixed
+    public function get(string|int $key, mixed $default = null): mixed
     {
-        return $array[$key] ?? $default;
+        return $this->items[$key] ?? $default;
     }
 
-    public function dot(array $array, string $prepend = ''): array
+    public function dot(string $prepend = ''): self
     {
         $results = [];
 
-        foreach ($array as $key => $value) {
+        foreach ($this->items as $key => $value) {
             if (is_array($value) && !empty($value)) {
                 $results = array_merge(
                     $results,
-                    $this->dot($value, $prepend . $key . '.')
+                    (new static($value))->dot($prepend . $key . '.')->toArray()
                 );
             } else {
                 $results[$prepend . $key] = $value;
             }
         }
 
-        return $results;
+        return new static($results);
     }
 
-    public function except(array $array, array $keys): array
+    public function except(array $keys): self
     {
-        return array_diff_key($array, array_flip($keys));
+        return new static(array_diff_key($this->items, array_flip($keys)));
     }
 
-    public function only(array $array, array $keys): array
+    public function only(array $keys): self
     {
-        return array_intersect_key($array, array_flip($keys));
+        return new static(array_intersect_key($this->items, array_flip($keys)));
     }
 
-    public function pluck(array $array, string $key, ?string $keyBy = null): array
+    public function pluck(string $key, ?string $keyBy = null): self
     {
         $results = [];
 
-        foreach ($array as $item) {
+        foreach ($this->items as $item) {
             if (!is_array($item) && !is_object($item)) {
                 continue;
             }
@@ -84,19 +86,19 @@ class ArrayHelper extends AbstractHelper
             $results[] = $itemArray[$key];
         }
 
-        return $results;
+        return new static($results);
     }
 
-    public function where(array $array, callable $callback): array
+    public function where(callable $callback): self
     {
-        return array_filter($array, $callback, ARRAY_FILTER_USE_BOTH);
+        return new static(array_filter($this->items, $callback, ARRAY_FILTER_USE_BOTH));
     }
 
-    public function groupBy(array $array, string $key): array
+    public function groupBy(string $key): self
     {
         $results = [];
 
-        foreach ($array as $item) {
+        foreach ($this->items as $item) {
             if (!is_array($item) && !is_object($item)) {
                 continue;
             }
@@ -114,6 +116,26 @@ class ArrayHelper extends AbstractHelper
             $results[$groupKey][] = $item;
         }
 
-        return $results;
+        return new static($results);
+    }
+
+    public function toArray(): array
+    {
+        return $this->items;
+    }
+
+    public function count(): int
+    {
+        return count($this->items);
+    }
+
+    public function isEmpty(): bool
+    {
+        return empty($this->items);
+    }
+
+    public function isNotEmpty(): bool
+    {
+        return !$this->isEmpty();
     }
 }

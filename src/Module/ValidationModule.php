@@ -38,6 +38,8 @@ class ValidationModule extends Module
         
         // Make validator available in container
         $this->container->singleton(RuleRegistry::class, fn() => $this->ruleRegistry);
+        
+        parent::boot();
     }
 
     private function registerCoreRules(): void

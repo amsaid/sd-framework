@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace SdFramework\Database;
 
+use SdFramework\Database\Relations\{HasOne, HasMany, BelongsTo};
+use SdFramework\Database\Collection;
+
 abstract class Model
 {
     protected static string $table;
     protected static array $fillable = [];
     protected array $attributes = [];
+    protected array $relations = [];
     protected static ?Connection $connection = null;
 
     public function __construct(array $attributes = [])
@@ -27,6 +31,14 @@ abstract class Model
 
     public function __get(string $name)
     {
+        if (array_key_exists($name, $this->relations)) {
+            return $this->relations[$name];
+        }
+
+        if (method_exists($this, $name)) {
+            return $this->relations[$name] = $this->$name()->getResults();
+        }
+
         return $this->attributes[$name] ?? null;
     }
 
@@ -55,16 +67,19 @@ abstract class Model
         return static::getConnection()->table(static::$table);
     }
 
-    public static function find($id)
+    public static function find($id): ?static
     {
         $result = static::query()->where('id', '=', $id)->first();
-        return $result ? new static($result) : null;
+        return $result ? new static((array)$result) : null;
     }
 
-    public static function all(): array
+    public static function all(): Collection
     {
         $results = static::query()->get();
-        return array_map(fn($data) => new static($data), $results);
+        return new Collection(
+            array_map(fn($data) => new static((array)$data), $results),
+            static::class
+        );
     }
 
     public static function where(string $column, string $operator, $value): QueryBuilder
@@ -97,5 +112,20 @@ abstract class Model
     public function toArray(): array
     {
         return $this->attributes;
+    }
+
+    protected function hasOne(string $related, string $foreignKey, string $localKey = 'id'): HasOne
+    {
+        return new HasOne($this, $related, $foreignKey, $localKey);
+    }
+
+    protected function hasMany(string $related, string $foreignKey, string $localKey = 'id'): HasMany
+    {
+        return new HasMany($this, $related, $foreignKey, $localKey);
+    }
+
+    protected function belongsTo(string $related, string $foreignKey, string $localKey = 'id'): BelongsTo
+    {
+        return new BelongsTo($this, $related, $foreignKey, $localKey);
     }
 }

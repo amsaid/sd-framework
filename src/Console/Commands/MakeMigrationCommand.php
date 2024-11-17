@@ -9,31 +9,41 @@ use DateTime;
 
 class MakeMigrationCommand extends Command
 {
-    protected string $signature = 'make:migration {name : The name of the migration}';
+    protected string $name = 'make:migration';
     protected string $description = 'Create a new migration file';
 
-    public function handle(): int
+    public function handle(array $arguments = [], array $options = []): int
     {
-        $name = $this->argument('name');
-        $timestamp = (new DateTime())->format('Y_m_d_His');
-        $className = $this->getClassName($name);
-        $path = $this->app->databasePath('migrations');
-        
-        if (!is_dir($path)) {
-            mkdir($path, 0755, true);
-        }
-        
-        $filename = $timestamp . '_' . $name . '.php';
-        $filepath = $path . '/' . $filename;
-        
-        if (file_exists($filepath)) {
-            $this->error('Migration already exists!');
+        try {
+            if (empty($arguments)) {
+                $this->error('Migration name not provided');
+                return 1;
+            }
+
+            $name = $arguments[0];
+            $timestamp = (new DateTime())->format('Y_m_d_His');
+            $className = $this->getClassName($name);
+            $path = $this->app->getBasePath() . '/database/migrations';
+            
+            if (!is_dir($path)) {
+                mkdir($path, 0755, true);
+            }
+            
+            $filename = $timestamp . '_' . $name . '.php';
+            $filepath = $path . '/' . $filename;
+            
+            if (file_exists($filepath)) {
+                $this->error('Migration already exists!');
+                return 1;
+            }
+            
+            file_put_contents($filepath, $this->getMigrationContent($className));
+            $this->output("Created Migration: {$filename}");
+            return 0;
+        } catch (\Throwable $e) {
+            $this->error($e->getMessage());
             return 1;
         }
-        
-        file_put_contents($filepath, $this->getMigrationContent($className));
-        $this->info("Created Migration: {$filename}");
-        return 0;
     }
 
     private function getClassName(string $name): string
@@ -55,7 +65,7 @@ namespace Database\Migrations;
 use SdFramework\Database\Migration;
 use SdFramework\Database\Schema\Table;
 
-class {$className} extends Migration
+return new class extends Migration
 {
     public function up(): void
     {
@@ -69,7 +79,7 @@ class {$className} extends Migration
     {
         \$this->dropTable('table_name');
     }
-}
+};
 
 PHP;
     }

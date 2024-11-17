@@ -15,6 +15,15 @@ class Column
     private bool $unsigned = false;
     private bool $autoIncrement = false;
     private bool $primary = false;
+    private bool $unique = false;
+    private ?int $length = null;
+    private ?string $after = null;
+    private bool $first = false;
+    private ?string $charset = null;
+    private ?string $collation = null;
+    private ?string $comment = null;
+    private bool $invisible = false;
+    private ?string $check = null;
 
     public function __construct(string $name, string $type, array $options = [])
     {
@@ -30,6 +39,9 @@ class Column
         }
         if (isset($options['primary'])) {
             $this->primary = $options['primary'];
+        }
+        if (isset($options['length'])) {
+            $this->length = $options['length'];
         }
     }
 
@@ -64,20 +76,129 @@ class Column
         return $this;
     }
 
+    public function unique(bool $value = true): self
+    {
+        $this->unique = $value;
+        return $this;
+    }
+
+    public function length(int $value): self
+    {
+        $this->length = $value;
+        return $this;
+    }
+
+    public function after(string $column): self
+    {
+        $this->after = $column;
+        return $this;
+    }
+
+    public function first(): self
+    {
+        $this->first = true;
+        return $this;
+    }
+
+    public function charset(string $charset): self
+    {
+        $this->charset = $charset;
+        return $this;
+    }
+
+    public function collation(string $collation): self
+    {
+        $this->collation = $collation;
+        return $this;
+    }
+
+    public function comment(string $comment): self
+    {
+        $this->comment = $comment;
+        return $this;
+    }
+
+    public function invisible(bool $value = true): self
+    {
+        $this->invisible = $value;
+        return $this;
+    }
+
+    public function check(string $expression): self
+    {
+        $this->check = $expression;
+        return $this;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function isUnique(): bool
+    {
+        return $this->unique;
+    }
+
+    public function isPrimary(): bool
+    {
+        return $this->primary;
+    }
+
+    private function formatDefaultValue(mixed $value): string
+    {
+        if (is_string($value)) {
+            return "'" . addslashes($value) . "'";
+        }
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+        if ($value === null) {
+            return 'NULL';
+        }
+        if (is_array($value) || is_object($value)) {
+            return "'" . addslashes(json_encode($value)) . "'";
+        }
+        return (string) $value;
+    }
+
     public function toSql(): string
     {
         $parts = ["`{$this->name}`"];
         
         // Type
         $type = strtoupper($this->type);
-        if (isset($this->options['length'])) {
+        
+        // Handle special types
+        if ($this->type === 'enum' || $this->type === 'set') {
+            $values = array_map(fn($v) => "'" . addslashes($v) . "'", $this->options['values']);
+            $type .= '(' . implode(',', $values) . ')';
+        } elseif (in_array($this->type, ['decimal', 'float', 'double']) && isset($this->options['precision'], $this->options['scale'])) {
+            $type .= "({$this->options['precision']},{$this->options['scale']})";
+        } elseif ($this->length !== null) {
+            $type .= "({$this->length})";
+        } elseif (isset($this->options['length'])) {
             $type .= "({$this->options['length']})";
         }
+        
+        // Handle JSON type (MariaDB uses CHECK constraint)
+        if (isset($this->options['is_json']) && $this->options['is_json']) {
+            $this->check("JSON_VALID(`{$this->name}`)");
+        }
+        
         $parts[] = $type;
         
         // Unsigned
-        if ($this->unsigned) {
+        if ($this->unsigned && in_array($this->type, ['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'decimal', 'float', 'double'])) {
             $parts[] = 'UNSIGNED';
+        }
+        
+        // Character set and collation
+        if ($this->charset) {
+            $parts[] = "CHARACTER SET {$this->charset}";
+        }
+        if ($this->collation) {
+            $parts[] = "COLLATE {$this->collation}";
         }
         
         // Nullable
@@ -85,11 +206,7 @@ class Column
         
         // Default
         if ($this->hasDefault) {
-            if ($this->default === null) {
-                $parts[] = 'DEFAULT NULL';
-            } else {
-                $parts[] = 'DEFAULT ' . $this->formatDefaultValue($this->default);
-            }
+            $parts[] = 'DEFAULT ' . $this->formatDefaultValue($this->default);
         }
         
         // Auto Increment
@@ -97,24 +214,28 @@ class Column
             $parts[] = 'AUTO_INCREMENT';
         }
         
-        // Primary Key
-        if ($this->primary) {
-            $parts[] = 'PRIMARY KEY';
+        // Invisible (MariaDB 10.3+)
+        if ($this->invisible) {
+            $parts[] = 'INVISIBLE';
+        }
+        
+        // Check constraint
+        if ($this->check) {
+            $parts[] = "CHECK ({$this->check})";
+        }
+        
+        // Comment
+        if ($this->comment) {
+            $parts[] = "COMMENT '" . addslashes($this->comment) . "'";
+        }
+        
+        // Column position
+        if ($this->after) {
+            $parts[] = "AFTER `{$this->after}`";
+        } elseif ($this->first) {
+            $parts[] = 'FIRST';
         }
         
         return implode(' ', $parts);
-    }
-
-    private function formatDefaultValue(mixed $value): string
-    {
-        if (is_bool($value)) {
-            return $value ? '1' : '0';
-        }
-        
-        if (is_numeric($value)) {
-            return (string) $value;
-        }
-        
-        return "'" . addslashes($value) . "'";
     }
 }

@@ -7,7 +7,7 @@ namespace Database\Migrations;
 use SdFramework\Database\Migration;
 use SdFramework\Database\Schema\Table;
 
-class CreateModulesTable extends Migration
+return new class extends  Migration
 {
     public function up(): void
     {
@@ -31,4 +31,4 @@ class CreateModulesTable extends Migration
     {
         $this->dropTable('modules');
     }
-}
+};

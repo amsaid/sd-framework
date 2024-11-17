@@ -7,7 +7,7 @@ namespace Database\Migrations;
 use SdFramework\Database\Migration;
 use SdFramework\Database\Schema\Table;
 
-class CreateEventsTable extends Migration
+return new class extends  Migration
 {
     public function up(): void
     {
@@ -34,4 +34,4 @@ class CreateEventsTable extends Migration
     {
         $this->dropTable('events');
     }
-}
+};

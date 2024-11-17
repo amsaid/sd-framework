@@ -3,24 +3,26 @@
 declare(strict_types=1);
 
 use SdFramework\Application;
+use SdFramework\Console\Application as ConsoleApplication;
+use SdFramework\Container\Container;
 use SdFramework\Support\Helper\HelperRegistry;
 
 if (!function_exists('app')) {
     /**
-     * Get the application instance or a service from the container.
+     * Get the available container instance.
      *
-     * @param string|null $abstract Service to resolve
-     * @param array $parameters Parameters for the service
-     * @return mixed Application instance or resolved service
+     * @param string|null $abstract Optional abstract type to resolve
+     * @param array $parameters Optional parameters to pass to the resolved type
+     * @return mixed|Application|Container The container instance or resolved type
      */
-    function app(?string $abstract = null, array $parameters = []): mixed
+    function app(string $abstract = null, array $parameters = []): mixed
     {
-        $app = Application::getInstance();
-        
-        if (is_null($abstract)) {
+        $app = Application::getInstance() ?? ConsoleApplication::getInstance();
+
+        if ($abstract === null) {
             return $app;
         }
-        
+
         return $app->make($abstract, $parameters);
     }
 }

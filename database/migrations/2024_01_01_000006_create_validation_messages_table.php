@@ -3,14 +3,13 @@
 declare(strict_types=1);
 
 use SdFramework\Database\Migration;
-use SdFramework\Database\Schema\Blueprint;
-use SdFramework\Database\Schema\Schema;
+use SdFramework\Database\Schema\Table;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('validation_messages', function (Blueprint $table) {
+        $this->createTable('validation_messages', function (Table $table) {
             $table->id();
             $table->string('locale')->default('en');
             $table->string('rule');
@@ -27,7 +26,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('validation_messages');
+        $this->dropTable('validation_messages');    
     }
 
     private function insertDefaultMessages(): void
@@ -46,7 +45,7 @@ return new class extends Migration
         ];
 
         foreach ($messages as $rule => $message) {
-            DB::table('validation_messages')->insert([
+            $this->connection->table('validation_messages')->insert([
                 'locale' => 'en',
                 'rule' => $rule,
                 'message' => $message,

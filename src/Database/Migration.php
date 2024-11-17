@@ -8,9 +8,9 @@ abstract class Migration
 {
     protected Connection $connection;
 
-    public function __construct(Connection $connection)
+    public function __construct()
     {
-        $this->connection = $connection;
+        $this->connection = app(Connection::class);
     }
 
     abstract public function up(): void;

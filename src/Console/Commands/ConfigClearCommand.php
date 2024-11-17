@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SdFramework\Console\Commands;
 
 use SdFramework\Console\Command;
-use SdFramework\Config\Config;
 
 class ConfigClearCommand extends Command
 {
@@ -14,15 +13,22 @@ class ConfigClearCommand extends Command
 
     public function handle(array $arguments = [], array $options = []): int
     {
-        $cachePath = storage_path('framework/cache');
-        $config = new Config([], $cachePath);
-        
-        if ($config->clearCache()) {
-            echo "Configuration cache cleared successfully!\n";
-            return 0;
-        }
+        try {
+            $cachePath = $this->app->getBasePath() . '/bootstrap/cache/config.php';
 
-        echo "No configuration cache found.\n";
-        return 0;
+            if (file_exists($cachePath)) {
+                if (!unlink($cachePath)) {
+                    throw new \RuntimeException("Failed to remove config cache file.");
+                }
+                $this->output('Configuration cache cleared successfully.');
+            } else {
+                $this->output('Configuration cache file not found.');
+            }
+
+            return 0;
+        } catch (\Throwable $e) {
+            $this->error($e->getMessage());
+            return 1;
+        }
     }
 }
