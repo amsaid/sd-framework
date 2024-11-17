@@ -194,4 +194,273 @@ PHP;
 
         return $controllerNamespace . "\\" . $controllerClass;
     }
+
+    protected function makeCommand(string $name): string
+    {
+        $commandNamespace = "App\\Commands";
+        $commandPath = app_path("Commands");
+        
+        if (!is_dir($commandPath)) {
+            mkdir($commandPath, 0755, true);
+        }
+
+        $commandClass = ucfirst($name) . "Command";
+        $commandFile = $commandPath . DIRECTORY_SEPARATOR . $commandClass . ".php";
+
+        if (!file_exists($commandFile)) {
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$commandNamespace};
+
+use SdFramework\Console\Command;
+
+class {$commandClass} extends Command
+{
+    protected string \$signature = '{$name}';
+    protected string \$description = 'Description of {$name} command';
+
+    public function handle(): int
+    {
+        \$this->info('Command {$name} is running...');
+        return self::SUCCESS;
+    }
+}
+PHP;
+            file_put_contents($commandFile, $content);
+        }
+
+        return $commandNamespace . "\\" . $commandClass;
+    }
+
+    protected function makeMiddleware(string $name): string
+    {
+        $middlewareNamespace = "App\\Middleware";
+        $middlewarePath = app_path("Middleware");
+        
+        if (!is_dir($middlewarePath)) {
+            mkdir($middlewarePath, 0755, true);
+        }
+
+        $middlewareClass = ucfirst($name) . "Middleware";
+        $middlewareFile = $middlewarePath . DIRECTORY_SEPARATOR . $middlewareClass . ".php";
+
+        if (!file_exists($middlewareFile)) {
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$middlewareNamespace};
+
+use SdFramework\Http\Request;
+use SdFramework\Http\Response;
+use SdFramework\Middleware\Middleware;
+
+class {$middlewareClass} implements Middleware
+{
+    public function handle(Request \$request, callable \$next): Response
+    {
+        // Add your middleware logic here
+        return \$next(\$request);
+    }
+}
+PHP;
+            file_put_contents($middlewareFile, $content);
+        }
+
+        return $middlewareNamespace . "\\" . $middlewareClass;
+    }
+
+    protected function makeEvent(string $name): string
+    {
+        $eventNamespace = "App\\Events";
+        $eventPath = app_path("Events");
+        
+        if (!is_dir($eventPath)) {
+            mkdir($eventPath, 0755, true);
+        }
+
+        $eventClass = ucfirst($name) . "Event";
+        $eventFile = $eventPath . DIRECTORY_SEPARATOR . $eventClass . ".php";
+
+        if (!file_exists($eventFile)) {
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$eventNamespace};
+
+class {$eventClass}
+{
+    public function __construct(
+        public readonly array \$payload = []
+    ) {}
+}
+PHP;
+            file_put_contents($eventFile, $content);
+        }
+
+        return $eventNamespace . "\\" . $eventClass;
+    }
+
+    protected function makeListener(string $name, string $event): string
+    {
+        $listenerNamespace = "App\\Listeners";
+        $listenerPath = app_path("Listeners");
+        
+        if (!is_dir($listenerPath)) {
+            mkdir($listenerPath, 0755, true);
+        }
+
+        $listenerClass = ucfirst($name) . "Listener";
+        $listenerFile = $listenerPath . DIRECTORY_SEPARATOR . $listenerClass . ".php";
+
+        if (!file_exists($listenerFile)) {
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$listenerNamespace};
+
+use {$event};
+
+class {$listenerClass}
+{
+    public function handle({$event} \$event): void
+    {
+        // Handle the event here
+    }
+}
+PHP;
+            file_put_contents($listenerFile, $content);
+        }
+
+        return $listenerNamespace . "\\" . $listenerClass;
+    }
+
+    protected function makeProvider(string $name): string
+    {
+        $providerNamespace = "App\\Providers";
+        $providerPath = app_path("Providers");
+        
+        if (!is_dir($providerPath)) {
+            mkdir($providerPath, 0755, true);
+        }
+
+        $providerClass = ucfirst($name) . "ServiceProvider";
+        $providerFile = $providerPath . DIRECTORY_SEPARATOR . $providerClass . ".php";
+
+        if (!file_exists($providerFile)) {
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$providerNamespace};
+
+use SdFramework\ServiceProvider\ServiceProvider;
+
+class {$providerClass} extends ServiceProvider
+{
+    public function register(): void
+    {
+        // Register bindings in the container
+    }
+
+    public function boot(): void
+    {
+        // Bootstrap any application services
+    }
+}
+PHP;
+            file_put_contents($providerFile, $content);
+        }
+
+        return $providerNamespace . "\\" . $providerClass;
+    }
+
+    protected function makeMigration(string $name): string
+    {
+        $migrationPath = database_path("migrations");
+        
+        if (!is_dir($migrationPath)) {
+            mkdir($migrationPath, 0755, true);
+        }
+
+        $timestamp = date('Y_m_d_His');
+        $migrationClass = ucfirst($name);
+        $migrationFile = $migrationPath . DIRECTORY_SEPARATOR . "{$timestamp}_{$name}.php";
+
+        if (!file_exists($migrationFile)) {
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+use SdFramework\Database\Migration;
+use SdFramework\Database\Schema;
+use SdFramework\Database\Blueprint;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('{$name}', function (Blueprint \$table) {
+            \$table->id();
+            \$table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('{$name}');
+    }
+};
+PHP;
+            file_put_contents($migrationFile, $content);
+        }
+
+        return $migrationFile;
+    }
+
+    protected function makeSeeder(string $name): string
+    {
+        $seederNamespace = "Database\\Seeders";
+        $seederPath = database_path("seeders");
+        
+        if (!is_dir($seederPath)) {
+            mkdir($seederPath, 0755, true);
+        }
+
+        $seederClass = ucfirst($name) . "Seeder";
+        $seederFile = $seederPath . DIRECTORY_SEPARATOR . $seederClass . ".php";
+
+        if (!file_exists($seederFile)) {
+            $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+namespace {$seederNamespace};
+
+use SdFramework\Database\Seeder;
+
+class {$seederClass} extends Seeder
+{
+    public function run(): void
+    {
+        // Add your seeder logic here
+    }
+}
+PHP;
+            file_put_contents($seederFile, $content);
+        }
+
+        return $seederNamespace . "\\" . $seederClass;
+    }
 }
