@@ -1,0 +1,38 @@
+{
+    "name": "sdframework/core",
+    "description": "A PSR-compatible PHP MVC Framework",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "psr/container": "^2.0",
+        "psr/http-message": "^2.0",
+        "psr/http-server-handler": "^1.0",
+        "psr/http-server-middleware": "^1.0",
+        "psr/log": "^3.0",
+        "psr/event-dispatcher": "^1.0",
+        "ext-redis": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "SdFramework\\": "src/",
+            "App\\": "app/"
+        },
+        "files": [
+            "src/Support/functions.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SdFramework\\Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0",
+        "squizlabs/php_codesniffer": "^3.7"
+    },
+    "scripts": {
+        "test": "phpunit",
+        "cs-check": "phpcs",
+        "cs-fix": "phpcbf"
+    }
+}

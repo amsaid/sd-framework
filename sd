@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/vendor/autoload.php';
+
+use SdFramework\Console\Application;
+use SdFramework\Console\Commands\ConfigCacheCommand;
+use SdFramework\Console\Commands\ConfigClearCommand;
+
+$app = new Application();
+
+// Register commands
+$app->add(new ConfigCacheCommand());
+$app->add(new ConfigClearCommand());
+
+// Run the application
+exit($app->run($argv));
